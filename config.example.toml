@@ -1,0 +1,28 @@
+[factorio]
+path = "/opt/factorio"
+data_path = "/home/you/.factorio"
+# version_override = "2.0"
+
+[auth]
+username = "your-factorio-username"
+token = "your-factorio-token"
+
+[behavior]
+verbose = false
+dry_run = false
+downgrade = false
+
+[dependencies]
+install_required = true
+install_optional = false
+remove_required = true
+remove_optional = false
+ignore_conflicts = false
+
+[reload]
+enabled = false
+service_name = "factorio"
+
+[runtime]
+# alternative_glibc_directory = "/opt/glibc-2.18"
+# alternative_glibc_version = "2.18"
