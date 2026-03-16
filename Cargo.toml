@@ -1,0 +1,19 @@
+[package]
+name = "factorio-mods-manager"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.38", features = ["derive", "wrap_help", "color"] }
+dialoguer = "0.12.0"
+dirs = "6.0.0"
+indicatif = "0.18.0"
+owo-colors = { version = "4.2.0", features = ["supports-colors"] }
+regex = "1.11.1"
+reqwest = { version = "0.12.15", default-features = false, features = ["blocking", "json", "rustls-tls", "stream"] }
+serde = { version = "1.0.219", features = ["derive"] }
+serde_json = "1.0.140"
+sha1 = "0.10.6"
+tempfile = "3.19.1"
+thiserror = "2.0.12"
+toml = "0.8.20"
