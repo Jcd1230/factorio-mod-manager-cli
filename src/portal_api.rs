@@ -1,6 +1,6 @@
 use std::cmp::Reverse;
 
-use reqwest::blocking::{Client, Response};
+use reqwest::{Client, Response};
 use serde::Deserialize;
 
 use crate::domain::{Comparator, DependencyKind, DependencySpec, FactorioVersion, VersionRequirement, parse_dependency};
@@ -48,17 +48,18 @@ impl PortalClient {
         })
     }
 
-    pub fn fetch_mod(&self, mod_name: &str) -> Result<ModApiResponse, AppError> {
+    pub async fn fetch_mod(&self, mod_name: &str) -> Result<ModApiResponse, AppError> {
         let response = self
             .http
             .get(format!("{API_BASE}/{mod_name}/full"))
-            .send()?;
+            .send()
+            .await?;
         if !response.status().is_success() {
             return Err(AppError::message(format!(
                 "could not fetch metadata for mod `{mod_name}`"
             )));
         }
-        Ok(response.json()?)
+        Ok(response.json().await?)
     }
 
     pub fn select_release(
@@ -100,12 +101,12 @@ impl PortalClient {
             .collect()
     }
 
-    pub fn download_release(&self, release: &Release) -> Result<Response, AppError> {
+    pub async fn download_release(&self, release: &Release) -> Result<Response, AppError> {
         let mut request = self.http.get(format!("{PORTAL_BASE}{}", release.download_url));
         if let (Some(username), Some(token)) = (&self.username, &self.token) {
             request = request.query(&[("username", username), ("token", token)]);
         }
-        Ok(request.send()?)
+        Ok(request.send().await?)
     }
 }
 

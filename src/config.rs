@@ -38,7 +38,7 @@ pub struct AuthSection {
     pub token: Option<String>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Serialize, Deserialize)]
 pub struct BehaviorSection {
     #[serde(default)]
     pub verbose: bool,
@@ -46,16 +46,6 @@ pub struct BehaviorSection {
     pub dry_run: bool,
     #[serde(default)]
     pub downgrade: bool,
-}
-
-impl Default for BehaviorSection {
-    fn default() -> Self {
-        Self {
-            verbose: false,
-            dry_run: false,
-            downgrade: false,
-        }
-    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

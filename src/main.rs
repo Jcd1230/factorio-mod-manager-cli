@@ -1,19 +1,12 @@
-mod app;
-mod cli;
-mod config;
-mod domain;
-mod error;
-mod factorio;
-mod portal_api;
-mod ui;
-
 use clap::Parser;
 
-use crate::cli::Cli;
+use factorio_mods_manager::cli::Cli;
+use factorio_mods_manager::commands;
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let cli = Cli::parse();
-    if let Err(error) = app::run(cli) {
+    if let Err(error) = commands::run(cli).await {
         eprintln!("error: {error}");
         std::process::exit(1);
     }
