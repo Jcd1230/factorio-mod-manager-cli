@@ -50,6 +50,12 @@ pub fn detect_version(config: &AppConfig) -> Result<FactorioVersion, AppError> {
 
     let paths = FactorioPaths::from_config(config)?;
     let binary_path = paths.factorio_path.join("bin/x64/factorio");
+    if !binary_path.is_file() {
+        return Err(AppError::message(format!(
+            "Factorio binary not found at {}",
+            binary_path.display()
+        )));
+    }
     let mut command = if let (Some(glibc_dir), Some(glibc_version)) = (
         config.runtime.alternative_glibc_directory.as_ref(),
         config.runtime.alternative_glibc_version.as_ref(),

@@ -58,6 +58,7 @@ fn maybe_run_first_time_setup(path: &Path, config: &mut AppConfig, ui: &Ui) -> R
         token: None,
         force: false,
     })?;
+    config::write(path, config)?;
     ui.success(&format!("Wrote {}", path.display()));
     Ok(())
 }
@@ -91,7 +92,7 @@ fn handle_config(command: ConfigSubcommand, ui: &Ui, explicit_config: Option<&Pa
 
 fn run_setup_wizard(
     mut config: AppConfig,
-    _path: &Path,
+    path: &Path,
     ui: &Ui,
     non_interactive: bool,
     args: &ConfigInitArgs,
@@ -101,6 +102,7 @@ fn run_setup_wizard(
         config.factorio.data_path = args.factorio_data_path.clone().or(config.factorio.data_path);
         config.auth.username = args.username.clone().or(config.auth.username);
         config.auth.token = args.token.clone().or(config.auth.token);
+        bootstrap_writable_paths(&config, ui)?;
         return Ok(config);
     }
 
@@ -164,6 +166,9 @@ fn run_setup_wizard(
                 .interact_text()?,
         );
     }
+
+    bootstrap_writable_paths(&config, ui)?;
+    ui.debug(&format!("Prepared setup output at {}", path.display()));
 
     Ok(config)
 }
@@ -230,9 +235,20 @@ fn doctor(config: &AppConfig, ui: &Ui) -> Result<(), AppError> {
         }
         Err(error) => ui.warn(&error.to_string()),
     }
-    match factorio::detect_version(config) {
-        Ok(version) => ui.success(&format!("Detected Factorio version: {version}")),
-        Err(error) => ui.warn(&format!("Version detection failed: {error}")),
+    if let Some(binary_path) = factorio_binary_path(config) {
+        if binary_path.is_file() {
+            match factorio::detect_version(config) {
+                Ok(version) => ui.success(&format!("Detected Factorio version: {version}")),
+                Err(error) => ui.warn(&format!("Version detection failed: {error}")),
+            }
+        } else {
+            ui.warn(&format!(
+                "Factorio binary not found: {}",
+                binary_path.display()
+            ));
+        }
+    } else {
+        ui.warn("Version detection skipped because Factorio path is not configured.");
     }
     if config.auth.username.is_some() && config.auth.token.is_some() {
         ui.success("Portal credentials are configured.");
@@ -660,6 +676,39 @@ fn ensure_credentials(config: &AppConfig) -> Result<(), AppError> {
     Err(AppError::message(
         "portal credentials are required for install/update operations",
     ))
+}
+
+fn bootstrap_writable_paths(config: &AppConfig, ui: &Ui) -> Result<(), AppError> {
+    let Some(data_path) = config.factorio.data_path.as_ref() else {
+        return Ok(());
+    };
+    if !data_path.exists() {
+        fs::create_dir_all(data_path)?;
+        ui.debug(&format!("Created data directory {}", data_path.display()));
+    }
+
+    let mods_dir = data_path.join("mods");
+    if !mods_dir.exists() {
+        fs::create_dir_all(&mods_dir)?;
+        ui.debug(&format!("Created mods directory {}", mods_dir.display()));
+    }
+
+    let mod_list_path = mods_dir.join("mod-list.json");
+    if !mod_list_path.exists() {
+        let empty_mod_list = ModListFile { mods: Vec::new() };
+        fs::write(&mod_list_path, serde_json::to_vec_pretty(&empty_mod_list)?)?;
+        ui.debug(&format!("Created {}", mod_list_path.display()));
+    }
+
+    Ok(())
+}
+
+fn factorio_binary_path(config: &AppConfig) -> Option<PathBuf> {
+    config
+        .factorio
+        .path
+        .as_ref()
+        .map(|path| path.join("bin/x64/factorio"))
 }
 
 fn validated_paths(config: &AppConfig) -> Result<FactorioPaths, AppError> {
