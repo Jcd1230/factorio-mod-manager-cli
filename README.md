@@ -102,12 +102,15 @@ cargo run -- doctor
 cargo run -- list
 cargo run -- install bobvehicleequipment
 cargo run -- install bobvehicleequipment --dry-run
+cargo run -- install bobvehicleequipment --prompt-optional-dependencies
 cargo run -- update --enabled-only
 cargo run -- remove FNEI
 cargo run -- enable bobplates bobgreenhouse
 cargo run -- disable IndustrialRevolution
 cargo run -- config show
 ```
+
+`install` always enables the full required dependency chain for the requested mod. Use `--prompt-optional-dependencies` to interactively choose optional dependencies encountered during installation.
 
 ## Doctor
 

@@ -38,6 +38,8 @@ pub struct InstallArgs {
     #[arg(long)]
     pub min_version: Option<String>,
     #[arg(long)]
+    pub prompt_optional_dependencies: bool,
+    #[arg(long)]
     pub dry_run: bool,
 }
 

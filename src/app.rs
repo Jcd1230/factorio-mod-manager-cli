@@ -16,6 +16,20 @@ use crate::factorio::{self, FactorioPaths};
 use crate::portal_api::{PortalClient, classify_dependencies, parse_version_requirement};
 use crate::ui::Ui;
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+enum OptionalDependencyMode {
+    Disabled,
+    AutoInstall,
+    Prompt,
+}
+
+#[derive(Clone, Copy, Debug)]
+struct InstallPolicy {
+    dry_run: bool,
+    interactive: bool,
+    optional_mode: OptionalDependencyMode,
+}
+
 pub fn run(cli: Cli) -> Result<(), AppError> {
     let ui = Ui::new(!cli.no_color, cli.verbose);
     match cli.command {
@@ -301,6 +315,7 @@ fn install_mod(config: &AppConfig, portal: &PortalClient, ui: &Ui, args: &Instal
     let factorio_version = factorio::detect_version(config)?;
     let mut list = factorio::read_mod_list(&paths)?;
     let mut seen = HashSet::new();
+    let policy = install_policy(config, args);
     install_one(
         &paths,
         config,
@@ -311,10 +326,9 @@ fn install_mod(config: &AppConfig, portal: &PortalClient, ui: &Ui, args: &Instal
         &args.mod_name,
         args.min_version.as_deref(),
         &mut seen,
-        args.dry_run || config.behavior.dry_run,
-        true,
+        policy,
     )?;
-    if !(args.dry_run || config.behavior.dry_run) {
+    if !policy.dry_run {
         factorio::write_mod_list(&paths, &list)?;
         reload_if_needed(config, ui, "Install complete.")?;
     }
@@ -332,8 +346,7 @@ fn install_one(
     mod_name: &str,
     min_version: Option<&str>,
     seen: &mut HashSet<String>,
-    dry_run: bool,
-    include_optional_dependencies: bool,
+    policy: InstallPolicy,
 ) -> Result<(), AppError> {
     if !seen.insert(mod_name.to_string()) {
         ui.debug(&format!("Already evaluated {mod_name}, skipping recursion."));
@@ -367,27 +380,27 @@ fn install_one(
                 &dependency.name,
                 dependency.version_requirement.as_ref().map(|req| req.version.to_string()).as_deref(),
                 seen,
-                dry_run,
-                false,
+                policy,
             )?;
         }
     }
-    if include_optional_dependencies && config.dependencies.install_optional {
-        for dependency in optional {
-            install_one(
-                paths,
-                config,
-                portal,
-                ui,
-                list,
-                factorio_version,
-                &dependency.name,
-                dependency.version_requirement.as_ref().map(|req| req.version.to_string()).as_deref(),
-                seen,
-                dry_run,
-                false,
-            )?;
+    for dependency in optional {
+        if !should_install_optional_dependency(ui, &dependency.name, policy)? {
+            ui.debug(&format!("Skipping optional dependency {}", dependency.name));
+            continue;
         }
+        install_one(
+            paths,
+            config,
+            portal,
+            ui,
+            list,
+            factorio_version,
+            &dependency.name,
+            dependency.version_requirement.as_ref().map(|req| req.version.to_string()).as_deref(),
+            seen,
+            policy,
+        )?;
     }
 
     factorio::set_enabled_state(list, &[mod_name.to_string()], true);
@@ -396,7 +409,7 @@ fn install_one(
         ui.success(&format!("{mod_name} is already current."));
         return Ok(());
     }
-    if dry_run {
+    if policy.dry_run {
         ui.info(&format!(
             "Would download {} to {}",
             release.file_name,
@@ -410,6 +423,113 @@ fn install_one(
         release.version, release.info_json.factorio_version
     ));
     Ok(())
+}
+
+fn install_policy(config: &AppConfig, args: &InstallArgs) -> InstallPolicy {
+    InstallPolicy {
+        dry_run: args.dry_run || config.behavior.dry_run,
+        interactive: std::io::stdin().is_terminal(),
+        optional_mode: if args.prompt_optional_dependencies {
+            OptionalDependencyMode::Prompt
+        } else if config.dependencies.install_optional {
+            OptionalDependencyMode::AutoInstall
+        } else {
+            OptionalDependencyMode::Disabled
+        },
+    }
+}
+
+fn should_install_optional_dependency(
+    ui: &Ui,
+    dependency_name: &str,
+    policy: InstallPolicy,
+) -> Result<bool, AppError> {
+    match policy.optional_mode {
+        OptionalDependencyMode::Disabled => Ok(false),
+        OptionalDependencyMode::AutoInstall => Ok(true),
+        OptionalDependencyMode::Prompt => {
+            if !policy.interactive {
+                ui.warn(&format!(
+                    "Skipping optional dependency {dependency_name} because prompting requires an interactive terminal."
+                ));
+                return Ok(false);
+            }
+            Confirm::with_theme(&ui.theme())
+                .with_prompt(format!("Install optional dependency {dependency_name}?"))
+                .default(false)
+                .interact()
+                .map_err(AppError::from)
+        }
+    }
+}
+
+#[cfg(test)]
+fn should_install_optional_dependency_with_decider<F>(
+    dependency_name: &str,
+    policy: InstallPolicy,
+    decider: F,
+) -> bool
+where
+    F: FnOnce(&str) -> bool,
+{
+    match policy.optional_mode {
+        OptionalDependencyMode::Disabled => false,
+        OptionalDependencyMode::AutoInstall => true,
+        OptionalDependencyMode::Prompt => {
+            if !policy.interactive {
+                return false;
+            }
+            decider(dependency_name)
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        InstallPolicy, OptionalDependencyMode, should_install_optional_dependency_with_decider,
+    };
+
+    #[test]
+    fn optional_dependency_policy_defaults_to_disabled() {
+        let policy = InstallPolicy {
+            dry_run: false,
+            interactive: true,
+            optional_mode: OptionalDependencyMode::Disabled,
+        };
+        assert!(!should_install_optional_dependency_with_decider("FNEI", policy, |_| true));
+    }
+
+    #[test]
+    fn optional_dependency_policy_auto_installs_recursively() {
+        let policy = InstallPolicy {
+            dry_run: false,
+            interactive: false,
+            optional_mode: OptionalDependencyMode::AutoInstall,
+        };
+        assert!(should_install_optional_dependency_with_decider("FNEI", policy, |_| false));
+    }
+
+    #[test]
+    fn optional_dependency_prompt_requires_interactive_terminal() {
+        let policy = InstallPolicy {
+            dry_run: false,
+            interactive: false,
+            optional_mode: OptionalDependencyMode::Prompt,
+        };
+        assert!(!should_install_optional_dependency_with_decider("FNEI", policy, |_| true));
+    }
+
+    #[test]
+    fn optional_dependency_prompt_uses_user_decision() {
+        let policy = InstallPolicy {
+            dry_run: false,
+            interactive: true,
+            optional_mode: OptionalDependencyMode::Prompt,
+        };
+        assert!(should_install_optional_dependency_with_decider("FNEI", policy, |_| true));
+        assert!(!should_install_optional_dependency_with_decider("FNEI", policy, |_| false));
+    }
 }
 
 fn update_mods(config: &AppConfig, portal: &PortalClient, ui: &Ui, args: &UpdateArgs) -> Result<(), AppError> {
@@ -431,8 +551,11 @@ fn update_mods(config: &AppConfig, portal: &PortalClient, ui: &Ui, args: &Update
             &entry.name,
             None,
             &mut HashSet::new(),
-            args.dry_run || config.behavior.dry_run,
-            false,
+            InstallPolicy {
+                dry_run: args.dry_run || config.behavior.dry_run,
+                interactive: false,
+                optional_mode: OptionalDependencyMode::Disabled,
+            },
         )?;
     }
     if !(args.dry_run || config.behavior.dry_run) {
