@@ -1,13 +1,26 @@
 use std::path::PathBuf;
 
+use clap::builder::styling::{AnsiColor, Effects, Styles};
 use clap::{Args, ColorChoice, Parser, Subcommand};
+
+fn clap_styles() -> Styles {
+    Styles::styled()
+        .header(AnsiColor::Cyan.on_default().effects(Effects::BOLD))
+        .usage(AnsiColor::Yellow.on_default().effects(Effects::BOLD))
+        .literal(AnsiColor::Green.on_default())
+        .placeholder(AnsiColor::BrightBlue.on_default())
+        .valid(AnsiColor::Green.on_default())
+        .invalid(AnsiColor::Red.on_default().effects(Effects::BOLD))
+        .error(AnsiColor::Red.on_default().effects(Effects::BOLD))
+}
 
 #[derive(Debug, Parser)]
 #[command(
     name = "mods-manager",
     version,
     about = "Manage Factorio mods with a structured CLI and TOML config.",
-    color = ColorChoice::Auto
+    color = ColorChoice::Auto,
+    styles = clap_styles()
 )]
 pub struct Cli {
     #[arg(long, global = true)]
