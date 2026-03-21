@@ -11,6 +11,13 @@ use crate::config::AppConfig;
 use crate::domain::{FactorioVersion, InstalledMod, ModListFile};
 use crate::error::AppError;
 
+#[cfg(target_os = "windows")]
+pub const FACTORIO_BINARY_PATH: &str = "bin/x64/factorio.exe";
+#[cfg(target_os = "macos")]
+pub const FACTORIO_BINARY_PATH: &str = "factorio.app/Contents/MacOS/factorio";
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
+pub const FACTORIO_BINARY_PATH: &str = "bin/x64/factorio";
+
 #[derive(Clone, Debug)]
 pub struct FactorioPaths {
     pub factorio_path: PathBuf,
@@ -49,7 +56,7 @@ pub fn detect_version(config: &AppConfig) -> Result<FactorioVersion, AppError> {
     }
 
     let paths = FactorioPaths::from_config(config)?;
-    let binary_path = paths.factorio_path.join("bin/x64/factorio");
+    let binary_path = paths.factorio_path.join(FACTORIO_BINARY_PATH);
     if !binary_path.is_file() {
         return Err(AppError::message(format!(
             "Factorio binary not found at {}",

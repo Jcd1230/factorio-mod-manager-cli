@@ -109,7 +109,7 @@ fn factorio_binary_path(config: &AppConfig) -> Option<PathBuf> {
         .factorio
         .path
         .as_ref()
-        .map(|path| path.join("bin/x64/factorio"))
+        .map(|path| path.join(crate::factorio::FACTORIO_BINARY_PATH))
 }
 
 fn reload_if_needed(config: &AppConfig, ui: &Ui, message: &str) -> Result<(), AppError> {
@@ -123,15 +123,25 @@ fn reload_if_needed(config: &AppConfig, ui: &Ui, message: &str) -> Result<(), Ap
         .service_name
         .as_ref()
         .ok_or_else(|| AppError::message("reload is enabled but service_name is not configured"))?;
-    ui.status("reload", &format!("Restarting {service_name}"));
-    let status = Command::new("systemctl")
-        .arg("restart")
-        .arg(service_name)
-        .status()?;
-    if !status.success() {
-        return Err(AppError::message(format!(
-            "systemctl restart {service_name} failed"
-        )));
+    
+    #[cfg(target_os = "linux")]
+    {
+        ui.status("reload", &format!("Restarting {service_name}"));
+        let status = Command::new("systemctl")
+            .arg("restart")
+            .arg(service_name)
+            .status()?;
+        if !status.success() {
+            return Err(AppError::message(format!(
+                "systemctl restart {service_name} failed"
+            )));
+        }
     }
+    
+    #[cfg(not(target_os = "linux"))]
+    {
+        ui.info(&format!("Automatic reload for '{service_name}' is currently only supported on Linux."));
+    }
+
     Ok(())
 }

@@ -149,20 +149,20 @@ fn run_setup_wizard(
 }
 
 fn suggest_factorio_path() -> Option<PathBuf> {
-    let mut candidates = vec![
+    let common_paths: Vec<PathBuf> = vec![
         PathBuf::from("/opt/factorio"),
-        PathBuf::from("/usr/local/games/factorio"),
+        PathBuf::from("/usr/share/factorio"),
+        PathBuf::from("/usr/local/share/factorio"),
+        dirs::home_dir().map(|h| h.join(".steam/steam/steamapps/common/Factorio")).unwrap_or_default(),
+        dirs::home_dir().map(|h| h.join("Library/Application Support/Steam/steamapps/common/Factorio")).unwrap_or_default(),
+        PathBuf::from("C:\\Program Files (x86)\\Steam\\steamapps\\common\\Factorio"),
+        PathBuf::from("C:\\Program Files\\Factorio"),
     ];
 
-    if let Some(home) = dirs::home_dir() {
-        candidates.push(home.join(".steam/steam/steamapps/common/Factorio"));
-        candidates.push(home.join(".local/share/Steam/steamapps/common/Factorio"));
-        candidates.push(home.join(".var/app/com.valvesoftware.Steam/.local/share/Steam/steamapps/common/Factorio"));
-    }
-
-    candidates
+    common_paths
         .into_iter()
-        .find(|path| path.join("bin/x64/factorio").is_file())
+        .filter(|path| path.is_dir())
+        .find(|path| path.join(crate::factorio::FACTORIO_BINARY_PATH).is_file())
 }
 
 fn suggest_factorio_data_path() -> Option<PathBuf> {

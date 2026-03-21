@@ -14,7 +14,7 @@ It supports:
 
 ## Requirements
 
-- Linux
+- Linux, Windows, or macOS
 - a Factorio installation
 - Rust toolchain
 
@@ -79,11 +79,11 @@ A sample config is provided in [`./config.example.toml`](./config.example.toml).
 
 Important settings:
 
-- `factorio.path`: installation directory containing `bin/x64/factorio`
+- `factorio.path`: installation directory containing the Factorio binary (e.g. `bin/x64/factorio` on Linux, `bin/x64/factorio.exe` on Windows, or `factorio.app/Contents/MacOS/factorio` on macOS)
 - `factorio.data_path`: writable data directory containing `mods/` and `mod-list.json`
 - `auth.username`: Factorio portal username
 - `auth.token`: Factorio portal token
-- `reload.enabled`: restart the configured systemd service after successful changes
+- `reload.enabled`: restart the configured systemd service after successful changes (Linux only)
 
 `FACTORIO_USERNAME` and `FACTORIO_TOKEN` override stored credentials.
 
