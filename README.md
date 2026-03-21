@@ -6,6 +6,7 @@
 - **Recursive dependency management** that automatically handles required and optional mod chains during installation and removal
 - **Install mods** directly from the Factorio mod portal
 - **Update all** installed mods with a single command
+- **Mod presets** to freely save, load, and version-lock entire mod loadouts effortlessly
 - **List installed mods** and their active status
 - **Enable or disable** mods without launching the game
 - **Validate setup** using the built-in `doctor` command
@@ -36,7 +37,9 @@ The wizard will attempt to automatically find your local Factorio installation p
 
 ### 3. Install a Modpack
 
-Install a massive overhaul modpack like Space Exploration, and let the manager effortlessly resolve and download the entire recursive dependency tree:
+To install a mod, you'll need its "slug" from the [Factorio Mod Portal](https://mods.factorio.com/). This is the last part of the mod's URL. For example, the URL for [Space Exploration](https://mods.factorio.com/mod/space-exploration) is `https://mods.factorio.com/mod/space-exploration`, so its slug is `space-exploration`.
+
+Install a project like Space Exploration, and let the manager effortlessly resolve and download the entire recursive dependency tree:
 
 ```sh
 factorio-mod-manager install space-exploration --prompt-optional-dependencies
@@ -92,6 +95,7 @@ factorio-mod-manager --help
 | `list` | List all installed mods and their versions. | `factorio-mod-manager list` |
 | `install <mod>` | Install a mod and its required dependencies. | `factorio-mod-manager install bobvehicleequipment` |
 | `update` | Update all enabled mods. | `factorio-mod-manager update --enabled-only` |
+| `preset save/load <name>` | Save or load mod loadout presets. | `factorio-mod-manager preset save my-loadout` |
 | `remove <mod>` | Uninstall a mod and its dependencies. | `factorio-mod-manager remove FNEI` |
 | `enable <mods...>` | Enable one or more mods. | `factorio-mod-manager enable bobplates bobgreenhouse` |
 | `disable <mods...>` | Disable one or more mods. | `factorio-mod-manager disable IndustrialRevolution` |
