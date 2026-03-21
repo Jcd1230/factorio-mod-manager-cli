@@ -8,6 +8,7 @@ use crate::config::{self, AppConfig};
 use crate::domain::ModListFile;
 use crate::error::AppError;
 use crate::ui::Ui;
+use owo_colors::OwoColorize;
 
 pub fn handle_config(command: ConfigSubcommand, ui: &Ui, explicit_config: Option<&Path>) -> Result<(), AppError> {
     match command {
@@ -110,7 +111,7 @@ fn run_setup_wizard(
 
     let configure_auth = Confirm::with_theme(&theme)
         .with_prompt("Configure portal credentials now?")
-        .default(config.auth.username.is_some() || config.auth.token.is_some())
+        .default(true)
         .interact()?;
     if configure_auth {
         config.auth.username = Some(
@@ -119,6 +120,7 @@ fn run_setup_wizard(
                 .default(config.auth.username.clone().unwrap_or_default())
                 .interact_text()?,
         );
+        ui.info(&format!("{}: You can find your token at {}", "Note".bold().cyan(), "https://factorio.com/profile".bold().underline()));
         let token = Password::with_theme(&theme)
             .with_prompt("Factorio token")
             .allow_empty_password(true)
