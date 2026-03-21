@@ -33,6 +33,13 @@ pub fn handle_config(command: ConfigSubcommand, ui: &Ui, explicit_config: Option
             ui.info(&toml::to_string_pretty(&loaded.config)?);
             Ok(())
         }
+        ConfigSubcommand::Path => {
+            let path = explicit_config
+                .map(PathBuf::from)
+                .unwrap_or_else(config::default_config_path);
+            ui.info(&path.to_string_lossy());
+            Ok(())
+        }
     }
 }
 
