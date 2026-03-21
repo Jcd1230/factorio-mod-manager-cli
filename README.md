@@ -2,23 +2,106 @@
 
 `factorio-mod-manager` is a command-line tool for managing mods on a local or headless Factorio installation.
 
-It supports:
-
-- listing installed mods
-- installing mods from the Factorio mod portal
-- updating installed mods
-- removing mods and dependency trees
-- enabling or disabling mods in `mod-list.json`
-- validating a setup with `doctor`
-- bootstrapping configuration with `config init`
-
-## Requirements
-
-- Linux, Windows, or macOS
-- a Factorio installation
-- Rust toolchain
+- **Cross-platform support** for Linux, Windows, and macOS
+- **Recursive dependency management** that automatically handles required and optional mod chains during installation and removal
+- **Install mods** directly from the Factorio mod portal
+- **Update all** installed mods with a single command
+- **List installed mods** and their active status
+- **Enable or disable** mods without launching the game
+- **Validate setup** using the built-in `doctor` command
+- **Interactive configuration** wizard via `config init`
 
 ## Installation
+
+The recommended way to install the manager is using the [`mise`](https://mise.jdx.dev/) GitHub backend:
+
+```sh
+mise use -g Jcd1230/factorio-mod-manager-cli
+```
+
+This will automatically download and install the pre-compiled binary for your system.
+
+## Configuration
+
+The tool reads `config.toml`. By default it uses:
+
+```text
+~/.config/factorio-mod-manager/config.toml
+```
+
+Generate a config interactively:
+
+```sh
+factorio-mod-manager config init
+```
+
+Generate a config non-interactively:
+
+```sh
+factorio-mod-manager config init --non-interactive \
+  --factorio-path /opt/factorio \
+  --factorio-data-path /srv/factorio-data \
+  --username YOUR_USER \
+  --token YOUR_TOKEN
+```
+
+A sample config is provided in [`./config.example.toml`](./config.example.toml).
+
+Important settings:
+
+- `factorio.path`: installation directory containing the Factorio binary (e.g. `bin/x64/factorio` on Linux, `bin/x64/factorio.exe` on Windows, or `factorio.app/Contents/MacOS/factorio` on macOS)
+- `factorio.data_path`: writable data directory containing `mods/` and `mod-list.json`
+- `auth.username`: Factorio portal username
+- `auth.token`: Factorio portal token
+- `reload.enabled`: restart the configured systemd service after successful changes (Linux only)
+
+`FACTORIO_USERNAME` and `FACTORIO_TOKEN` environment variables override stored credentials.
+
+## Usage
+
+Show help and available commands:
+
+```sh
+factorio-mod-manager --help
+```
+
+### Common Commands
+
+| Command | Description | Example |
+|---|---|---|
+| `doctor` | Check setup and report issues. | `factorio-mod-manager doctor` |
+| `list` | List all installed mods and their versions. | `factorio-mod-manager list` |
+| `install <mod>` | Install a mod and its required dependencies. | `factorio-mod-manager install bobvehicleequipment` |
+| `update` | Update all enabled mods. | `factorio-mod-manager update --enabled-only` |
+| `remove <mod>` | Uninstall a mod and its dependencies. | `factorio-mod-manager remove FNEI` |
+| `enable <mods...>` | Enable one or more mods. | `factorio-mod-manager enable bobplates bobgreenhouse` |
+| `disable <mods...>` | Disable one or more mods. | `factorio-mod-manager disable IndustrialRevolution` |
+| `config show` | Print current configuration. | `factorio-mod-manager config show` |
+
+**Modifiers:**
+- `--dry-run`: Preview changes without applying them. (e.g. `factorio-mod-manager install bobvehicleequipment --dry-run`)
+- `--prompt-optional-dependencies`: Interactively choose optional dependencies during installation.
+
+## Doctor
+
+`doctor` checks the local setup and reports issues such as:
+
+- missing Factorio install path
+- missing data path
+- missing `mod-list.json`
+- missing Factorio binary
+- missing portal credentials
+- incomplete reload configuration
+
+Run it with:
+
+```sh
+factorio-mod-manager doctor
+```
+
+## Building from Source
+
+If you prefer to compile the tool yourself, you will need a Rust toolchain.
 
 ### With `mise` (recommended)
 
@@ -37,11 +120,7 @@ mise install
 cargo build --release
 ```
 
-The binary will be available at:
-
-```text
-./target/release/factorio-mod-manager
-```
+The binary will be available at: `./target/release/factorio-mod-manager`
 
 ### Without `mise`
 
@@ -49,84 +128,6 @@ Install a current Rust toolchain with `rustup`, then build normally:
 
 ```sh
 cargo build --release
-```
-
-## Configuration
-
-The tool reads `config.toml`. By default it uses:
-
-```text
-~/.config/factorio-mod-manager/config.toml
-```
-
-Generate a config interactively:
-
-```sh
-cargo run -- config init
-```
-
-Generate a config non-interactively:
-
-```sh
-cargo run -- config init --non-interactive \
-  --factorio-path /opt/factorio \
-  --factorio-data-path /srv/factorio-data \
-  --username YOUR_USER \
-  --token YOUR_TOKEN
-```
-
-A sample config is provided in [`./config.example.toml`](./config.example.toml).
-
-Important settings:
-
-- `factorio.path`: installation directory containing the Factorio binary (e.g. `bin/x64/factorio` on Linux, `bin/x64/factorio.exe` on Windows, or `factorio.app/Contents/MacOS/factorio` on macOS)
-- `factorio.data_path`: writable data directory containing `mods/` and `mod-list.json`
-- `auth.username`: Factorio portal username
-- `auth.token`: Factorio portal token
-- `reload.enabled`: restart the configured systemd service after successful changes (Linux only)
-
-`FACTORIO_USERNAME` and `FACTORIO_TOKEN` override stored credentials.
-
-## Usage
-
-Show help:
-
-```sh
-cargo run -- --help
-```
-
-Common commands:
-
-```sh
-cargo run -- doctor
-cargo run -- list
-cargo run -- install bobvehicleequipment
-cargo run -- install bobvehicleequipment --dry-run
-cargo run -- install bobvehicleequipment --prompt-optional-dependencies
-cargo run -- update --enabled-only
-cargo run -- remove FNEI
-cargo run -- enable bobplates bobgreenhouse
-cargo run -- disable IndustrialRevolution
-cargo run -- config show
-```
-
-`install` always enables the full required dependency chain for the requested mod. Use `--prompt-optional-dependencies` to interactively choose optional dependencies encountered during installation.
-
-## Doctor
-
-`doctor` checks the local setup and reports issues such as:
-
-- missing Factorio install path
-- missing data path
-- missing `mod-list.json`
-- missing Factorio binary
-- missing portal credentials
-- incomplete reload configuration
-
-Run it with:
-
-```sh
-cargo run -- doctor
 ```
 
 ## Development
