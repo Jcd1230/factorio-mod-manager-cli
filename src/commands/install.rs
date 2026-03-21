@@ -61,8 +61,21 @@ pub async fn install_one(
         ui.debug(&format!("Already evaluated {mod_name}, skipping recursion."));
         return Ok(());
     }
+    
+    let built_in_mods = ["base", "elevated-rails", "quality", "space-age"];
+    if built_in_mods.contains(&mod_name) {
+        ui.debug(&format!("Skipping built-in engine mod {mod_name}."));
+        return Ok(());
+    }
+
     ui.status("fetch", &format!("Resolving {mod_name}"));
-    let response = portal.fetch_mod(mod_name).await?;
+    let response = match portal.fetch_mod(mod_name).await {
+        Ok(res) => res,
+        Err(_) => {
+            ui.warn(&format!("Could not fetch metadata for {mod_name} from the portal. Skipping."));
+            return Ok(());
+        }
+    };
     let requirement = min_version.map(parse_version_requirement).transpose()?;
     let release = portal
         .select_release(

@@ -105,23 +105,6 @@ factorio-mod-manager --help
 - `--dry-run`: Preview changes without applying them. (e.g. `factorio-mod-manager install bobvehicleequipment --dry-run`)
 - `--prompt-optional-dependencies`: Interactively choose optional dependencies during installation.
 
-## Doctor
-
-`doctor` checks the local setup and reports issues such as:
-
-- missing Factorio install path
-- missing data path
-- missing `mod-list.json`
-- missing Factorio binary
-- missing portal credentials
-- incomplete reload configuration
-
-Run it with:
-
-```sh
-factorio-mod-manager doctor
-```
-
 ## Building from Source
 
 If you prefer to compile the tool yourself, you will need a Rust toolchain.

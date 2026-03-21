@@ -15,7 +15,11 @@ pub async fn update_mods(config: &AppConfig, portal: &PortalClient, ui: &Ui, arg
     ensure_credentials(config)?;
     let factorio_version = factorio::detect_version(config)?;
     let mut list = factorio::read_mod_list(&paths)?;
+    let built_in_mods = ["base", "elevated-rails", "quality", "space-age"];
     for entry in list.mods.clone() {
+        if built_in_mods.contains(&entry.name.as_str()) {
+            continue;
+        }
         if args.enabled_only && !entry.enabled {
             continue;
         }
