@@ -55,6 +55,8 @@ pub enum Commands {
     Doctor,
     /// Manage the application configuration.
     Config(ConfigCommand),
+    /// Manage mod presets to save and swap mod loadouts.
+    Preset(PresetCommand),
 }
 
 #[derive(Debug, Args)]
@@ -137,4 +139,38 @@ pub struct ConfigInitArgs {
     /// Force overwrite of an existing config file.
     #[arg(long)]
     pub force: bool,
+}
+
+#[derive(Debug, Args)]
+pub struct PresetCommand {
+    #[command(subcommand)]
+    pub command: PresetSubcommand,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum PresetSubcommand {
+    /// Save the currently enabled mods as a preset, locking their exact versions.
+    Save(PresetActionArgs),
+    /// Load a preset, downloading missing mods and completely overwriting the current mod loadout.
+    Load(PresetActionArgs),
+    /// List all currently saved presets.
+    List,
+    /// Rename an existing preset.
+    Rename(PresetRenameArgs),
+    /// Delete an existing preset.
+    Delete(PresetActionArgs),
+}
+
+#[derive(Debug, Args)]
+pub struct PresetActionArgs {
+    /// The name of the preset.
+    pub name: String,
+}
+
+#[derive(Debug, Args)]
+pub struct PresetRenameArgs {
+    /// The current name of the preset.
+    pub old_name: String,
+    /// The new name for the preset.
+    pub new_name: String,
 }

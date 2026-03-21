@@ -1,5 +1,6 @@
 mod config_wizard;
 mod doctor;
+mod preset;
 mod install;
 mod list;
 mod remove;
@@ -48,6 +49,7 @@ pub async fn run(cli: Cli) -> Result<(), AppError> {
                 Commands::Install(args) => install::install_mod(&config, &portal, &ui, &args).await,
                 Commands::Update(args) => update::update_mods(&config, &portal, &ui, &args).await,
                 Commands::Remove(args) => remove::remove_mod(&config, &portal, &ui, &args).await,
+                Commands::Preset(args) => preset::handle_preset(args.command, &crate::config::LoadedConfig { path: config_path, config: config.clone() }, &portal, &ui).await,
                 Commands::Config(_) => unreachable!(),
             }
         }
