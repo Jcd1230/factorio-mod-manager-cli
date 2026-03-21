@@ -40,7 +40,7 @@ pub struct ReleaseInfoJson {
 
 impl PortalClient {
     pub fn new(username: Option<String>, token: Option<String>) -> Result<Self, AppError> {
-        let http = Client::builder().user_agent("factorio-mods-manager-rust").build()?;
+        let http = Client::builder().user_agent("factorio-mod-manager-rust").build()?;
         Ok(Self {
             http,
             username,

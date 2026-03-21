@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::error::AppError;
 
-const APP_DIR: &str = "factorio-mods-manager";
+const APP_DIR: &str = "factorio-mod-manager";
 const CONFIG_FILE_NAME: &str = "config.toml";
 
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]

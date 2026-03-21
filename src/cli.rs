@@ -16,7 +16,7 @@ fn clap_styles() -> Styles {
 
 #[derive(Debug, Parser)]
 #[command(
-    name = "mods-manager",
+    name = "mod-manager",
     version,
     about = "Manage Factorio mods with a structured CLI and TOML config.",
     color = ColorChoice::Auto,

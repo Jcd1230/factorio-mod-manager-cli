@@ -49,12 +49,12 @@ jobs:
       - name: Build archive
         shell: bash
         run: |
-          binary_name="factorio-mods-manager"
+          binary_name="factorio-mod-manager"
           if [ "${{ matrix.build }}" = "windows" ]; then
-            binary_name="factorio-mods-manager.exe"
+            binary_name="factorio-mod-manager.exe"
           fi
           
-          staging="factorio-mods-manager-${{ matrix.target }}"
+          staging="factorio-mod-manager-${{ matrix.target }}"
           mkdir "$staging"
           
           cp "target/${{ matrix.target }}/release/$binary_name" "$staging/"

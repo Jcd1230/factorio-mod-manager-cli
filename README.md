@@ -1,6 +1,6 @@
-# Factorio Mods Manager
+# Factorio Mod Manager
 
-`factorio-mods-manager` is a command-line tool for managing mods on a local or headless Factorio installation.
+`factorio-mod-manager` is a command-line tool for managing mods on a local or headless Factorio installation.
 
 It supports:
 
@@ -40,7 +40,7 @@ cargo build --release
 The binary will be available at:
 
 ```text
-./target/release/factorio-mods-manager
+./target/release/factorio-mod-manager
 ```
 
 ### Without `mise`
@@ -56,7 +56,7 @@ cargo build --release
 The tool reads `config.toml`. By default it uses:
 
 ```text
-~/.config/factorio-mods-manager/config.toml
+~/.config/factorio-mod-manager/config.toml
 ```
 
 Generate a config interactively:
