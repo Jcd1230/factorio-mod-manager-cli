@@ -11,28 +11,47 @@
 - **Validate setup** using the built-in `doctor` command
 - **Interactive configuration** wizard via `config init`
 
-## Installation
+## Quickstart
 
-The recommended way to install the manager is using the [`mise`](https://mise.jdx.dev/) GitHub backend:
+### 1. Install
 
+**Via GitHub Releases:**
+Simply download the pre-compiled binary for your system (Windows, Linux, or macOS) from the [Releases](https://github.com/Jcd1230/factorio-mod-manager-cli/releases) page, extract it, and run it in any directory in your terminal.
+
+**Via `mise` (Recommended):**
+Using the [`mise`](https://mise.jdx.dev/) GitHub backend lets you seamlessly install and switch between versions:
 ```sh
-mise use -g Jcd1230/factorio-mod-manager-cli
+mise use -g github:Jcd1230/factorio-mod-manager-cli
 ```
 
-This will automatically download and install the pre-compiled binary for your system.
+### 2. Configure
 
-## Configuration
-
-The tool reads `config.toml`. By default it uses:
-
-```text
-~/.config/factorio-mod-manager/config.toml
-```
-
-Generate a config interactively:
+Initialize your configuration via the interactive wizard:
 
 ```sh
 factorio-mod-manager config init
+```
+
+The wizard will attempt to automatically find your local Factorio installation path and data path (where mods are stored). Next, provide your Factorio username and web token (found directly on your Factorio profile page) so the CLI can securely authenticate with the mod portal.
+
+### 3. Install a Modpack
+
+Install a massive overhaul modpack like Space Exploration, and let the manager effortlessly resolve and download the entire recursive dependency tree:
+
+```sh
+factorio-mod-manager install space-exploration --prompt-optional-dependencies
+```
+
+The tool will locate the mod, fetch all of its required dependencies natively, and download them. By appending `--prompt-optional-dependencies`, the manager will also interactively ask whether you'd like to install any of the optional, recommended dependencies it discovers as it resolves the tree.
+
+---
+
+## Configuration
+
+The tool reads `config.toml`. By default, it will drop your configuration file at:
+
+```text
+~/.config/factorio-mod-manager/config.toml
 ```
 
 Generate a config non-interactively:
