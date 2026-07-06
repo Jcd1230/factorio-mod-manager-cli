@@ -171,7 +171,18 @@ pub fn installed_mod_versions(paths: &FactorioPaths) -> Result<BTreeMap<String, 
         let Some((name, version)) = stem.rsplit_once('_') else {
             continue;
         };
-        if FactorioVersion::parse(version).is_ok() {
+        let Ok(parsed_version) = FactorioVersion::parse(version) else {
+            continue;
+        };
+
+        let should_update = match versions.get(name) {
+            Some(existing_version) => FactorioVersion::parse(existing_version)
+                .map(|existing| parsed_version > existing)
+                .unwrap_or(true),
+            None => true,
+        };
+
+        if should_update {
             versions.insert(name.to_string(), version.to_string());
         }
     }
