@@ -56,7 +56,11 @@ fn set_enabled_state_sorts_after_mutation() {
 
 #[test]
 fn remove_mod_entry_removes_correct_mod() {
-    let mut list = make_mod_list(vec![("keep-me", true), ("remove-me", true), ("also-keep", false)]);
+    let mut list = make_mod_list(vec![
+        ("keep-me", true),
+        ("remove-me", true),
+        ("also-keep", false),
+    ]);
     factorio::remove_mod_entry(&mut list, "remove-me");
     assert_eq!(list.mods.len(), 2);
     assert!(!list.mods.iter().any(|m| m.name == "remove-me"));
@@ -119,4 +123,33 @@ fn find_existing_release_returns_false_when_file_missing() {
     let dir = tempdir().unwrap();
     let paths = make_paths(dir.path());
     assert!(!factorio::find_existing_release(&paths, "nonexistent.zip", "any_sha1").unwrap());
+}
+
+#[test]
+fn installed_mod_versions_reads_zip_filenames() {
+    let dir = tempdir().unwrap();
+    let paths = make_paths(dir.path());
+    fs::write(paths.mods_dir.join("bobplates_1.2.3.zip"), b"mod content").unwrap();
+    fs::write(
+        paths.mods_dir.join("angels_refining_0.9.10.zip"),
+        b"mod content",
+    )
+    .unwrap();
+    fs::write(paths.mods_dir.join("not-a-mod.txt"), b"ignore me").unwrap();
+
+    let versions = factorio::installed_mod_versions(&paths).unwrap();
+    assert_eq!(versions.get("bobplates"), Some(&"1.2.3".to_string()));
+    assert_eq!(versions.get("angels_refining"), Some(&"0.9.10".to_string()));
+    assert_eq!(versions.len(), 2);
+}
+
+#[test]
+fn installed_mod_versions_ignores_non_versioned_zip_names() {
+    let dir = tempdir().unwrap();
+    let paths = make_paths(dir.path());
+    fs::write(paths.mods_dir.join("broken_mod_latest.zip"), b"mod content").unwrap();
+    fs::write(paths.mods_dir.join("missing-version.zip"), b"mod content").unwrap();
+
+    let versions = factorio::installed_mod_versions(&paths).unwrap();
+    assert!(versions.is_empty());
 }
