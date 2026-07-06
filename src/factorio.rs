@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
@@ -140,11 +141,40 @@ pub fn compute_sha1(path: &Path) -> Result<String, AppError> {
     }
     Ok(format!("{:x}", hasher.finalize()))
 }
-
-pub fn find_existing_release(paths: &FactorioPaths, file_name: &str, sha1: &str) -> Result<bool, AppError> {
+pub fn find_existing_release(
+    paths: &FactorioPaths,
+    file_name: &str,
+    sha1: &str,
+) -> Result<bool, AppError> {
     let candidate = paths.mods_dir.join(file_name);
     if !candidate.is_file() {
         return Ok(false);
     }
     Ok(compute_sha1(&candidate)? == sha1)
+}
+
+pub fn installed_mod_versions(paths: &FactorioPaths) -> Result<BTreeMap<String, String>, AppError> {
+    let mut versions = BTreeMap::new();
+    if !paths.mods_dir.is_dir() {
+        return Ok(versions);
+    }
+
+    for entry in fs::read_dir(&paths.mods_dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().and_then(|ext| ext.to_str()) != Some("zip") {
+            continue;
+        }
+        let Some(stem) = path.file_stem().and_then(|stem| stem.to_str()) else {
+            continue;
+        };
+        let Some((name, version)) = stem.rsplit_once('_') else {
+            continue;
+        };
+        if FactorioVersion::parse(version).is_ok() {
+            versions.insert(name.to_string(), version.to_string());
+        }
+    }
+
+    Ok(versions)
 }

@@ -8,6 +8,7 @@ use super::validated_paths;
 pub fn list_mods(config: &AppConfig, ui: &Ui) -> Result<(), AppError> {
     let paths = validated_paths(config)?;
     let list = factorio::read_mod_list(&paths)?;
+    let versions = factorio::installed_mod_versions(&paths)?;
     ui.heading("Installed mods");
     if list.mods.is_empty() {
         ui.info("No mods are installed.");
@@ -15,7 +16,11 @@ pub fn list_mods(config: &AppConfig, ui: &Ui) -> Result<(), AppError> {
     }
     for entry in list.mods {
         let state = if entry.enabled { "enabled" } else { "disabled" };
-        ui.info(&format!("{} ({state})", entry.name));
+        let version = versions
+            .get(&entry.name)
+            .map(|version| format!(" v{version}"))
+            .unwrap_or_default();
+        ui.info(&format!("{}{} ({state})", entry.name, version));
     }
     Ok(())
 }
