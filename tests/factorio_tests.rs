@@ -144,6 +144,19 @@ fn installed_mod_versions_reads_zip_filenames() {
 }
 
 #[test]
+fn installed_mod_versions_keeps_highest_version_for_duplicate_archives() {
+    let dir = tempdir().unwrap();
+    let paths = make_paths(dir.path());
+    fs::write(paths.mods_dir.join("bobplates_1.2.3.zip"), b"mod content").unwrap();
+    fs::write(paths.mods_dir.join("bobplates_1.10.0.zip"), b"mod content").unwrap();
+    fs::write(paths.mods_dir.join("bobplates_1.9.9.zip"), b"mod content").unwrap();
+
+    let versions = factorio::installed_mod_versions(&paths).unwrap();
+    assert_eq!(versions.get("bobplates"), Some(&"1.10.0".to_string()));
+    assert_eq!(versions.len(), 1);
+}
+
+#[test]
 fn installed_mod_versions_ignores_non_versioned_zip_names() {
     let dir = tempdir().unwrap();
     let paths = make_paths(dir.path());
